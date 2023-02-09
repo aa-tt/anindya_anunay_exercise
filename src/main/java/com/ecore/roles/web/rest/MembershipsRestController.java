@@ -1,7 +1,13 @@
 package com.ecore.roles.web.rest;
 
+import com.ecore.roles.client.model.Team;
+import com.ecore.roles.exception.InvalidArgumentException;
+import com.ecore.roles.exception.ResourceNotFoundException;
 import com.ecore.roles.model.Membership;
+import com.ecore.roles.model.Role;
 import com.ecore.roles.service.MembershipsService;
+import com.ecore.roles.service.RolesService;
+import com.ecore.roles.service.TeamsService;
 import com.ecore.roles.web.MembershipsApi;
 import com.ecore.roles.web.dto.MembershipDto;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +27,8 @@ import static com.ecore.roles.web.dto.MembershipDto.fromModel;
 public class MembershipsRestController implements MembershipsApi {
 
     private final MembershipsService membershipsService;
+    private final TeamsService teamsService;
+    private final RolesService rolesService;
 
     @Override
     @PostMapping(
@@ -28,14 +36,15 @@ public class MembershipsRestController implements MembershipsApi {
             produces = {"application/json"})
     public ResponseEntity<MembershipDto> assignRoleToMembership(
             @NotNull @Valid @RequestBody MembershipDto membershipDto) {
+        validateMembership(membershipDto);
         Membership membership = membershipsService.assignRoleToMembership(membershipDto.toModel());
         return ResponseEntity
-                .status(200)
+                .status(201)
                 .body(fromModel(membership));
     }
 
     @Override
-    @PostMapping(
+    @GetMapping(
             path = "/search",
             produces = {"application/json"})
     public ResponseEntity<List<MembershipDto>> getMemberships(
@@ -55,4 +64,17 @@ public class MembershipsRestController implements MembershipsApi {
                 .body(newMembershipDto);
     }
 
+    private void validateMembership(MembershipDto membershipDto) {
+        if (rolesService.getRole(membershipDto.getRoleId()) == null) {
+            throw new ResourceNotFoundException(Role.class, membershipDto.getRoleId());
+        }
+        if (teamsService.getTeam(membershipDto.getTeamId()) == null) {
+            throw new ResourceNotFoundException(Team.class, membershipDto.getTeamId());
+        }
+        if (!teamsService.getTeam(membershipDto.getTeamId()).getTeamMemberIds()
+                .contains(membershipDto.getUserId())) {
+            throw new InvalidArgumentException(Membership.class,
+                    "The provided user doesn't belong to the provided team.");
+        }
+    }
 }

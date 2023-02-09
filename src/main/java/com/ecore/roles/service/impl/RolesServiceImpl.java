@@ -1,11 +1,11 @@
 package com.ecore.roles.service.impl;
 
+import com.ecore.roles.client.model.Team;
 import com.ecore.roles.exception.ResourceExistsException;
 import com.ecore.roles.exception.ResourceNotFoundException;
 import com.ecore.roles.model.Role;
 import com.ecore.roles.repository.MembershipRepository;
 import com.ecore.roles.repository.RoleRepository;
-import com.ecore.roles.service.MembershipsService;
 import com.ecore.roles.service.RolesService;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
@@ -23,20 +23,17 @@ public class RolesServiceImpl implements RolesService {
 
     private final RoleRepository roleRepository;
     private final MembershipRepository membershipRepository;
-    private final MembershipsService membershipsService;
 
     @Autowired
     public RolesServiceImpl(
             RoleRepository roleRepository,
-            MembershipRepository membershipRepository,
-            MembershipsService membershipsService) {
+            MembershipRepository membershipRepository) {
         this.roleRepository = roleRepository;
         this.membershipRepository = membershipRepository;
-        this.membershipsService = membershipsService;
     }
 
     @Override
-    public Role CreateRole(@NonNull Role r) {
+    public Role createRole(@NonNull Role r) {
         if (roleRepository.findByName(r.getName()).isPresent()) {
             throw new ResourceExistsException(Role.class);
         }
@@ -44,13 +41,20 @@ public class RolesServiceImpl implements RolesService {
     }
 
     @Override
-    public Role GetRole(@NonNull UUID rid) {
+    public Role getRole(@NonNull UUID rid) {
         return roleRepository.findById(rid)
                 .orElseThrow(() -> new ResourceNotFoundException(Role.class, rid));
     }
 
     @Override
-    public List<Role> GetRoles() {
+    public Role searchRole(@NonNull UUID uid, @NonNull UUID tid) {
+        return membershipRepository.findByUserIdAndTeamId(uid, tid)
+                .orElseThrow(() -> new ResourceNotFoundException(Team.class, tid))
+                .getRole();
+    }
+
+    @Override
+    public List<Role> getRoles() {
         return roleRepository.findAll();
     }
 
