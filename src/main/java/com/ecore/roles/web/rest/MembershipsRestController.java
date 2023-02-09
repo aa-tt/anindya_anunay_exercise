@@ -65,7 +65,7 @@ public class MembershipsRestController implements MembershipsApi {
     }
 
     private void validateMembership(MembershipDto membershipDto) {
-        if (rolesService.GetRole(membershipDto.getRoleId()) == null) {
+        if (rolesService.getRole(membershipDto.getRoleId()) == null) {
             throw new ResourceNotFoundException(Role.class, membershipDto.getRoleId());
         }
         if (teamsService.getTeam(membershipDto.getTeamId()) == null) {
