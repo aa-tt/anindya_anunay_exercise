@@ -72,7 +72,7 @@ public class MembershipsRestController implements MembershipsApi {
             throw new ResourceNotFoundException(Team.class, membershipDto.getTeamId());
         }
         if (!teamsService.getTeam(membershipDto.getTeamId()).getTeamMemberIds()
-                         .contains(membershipDto.getUserId())) {
+                .contains(membershipDto.getUserId())) {
             throw new InvalidArgumentException(Membership.class,
                     "The provided user doesn't belong to the provided team.");
         }
